@@ -1,16 +1,15 @@
-from pprint import pprint
+from pydantic import Field
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings
 from pydantic_settings import CliSettingsSource
 from pydantic_settings import SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    API_KEY_ID: str
-    API_KEY_TOKEN: str
+    API_KEY_ID: str = Field(..., description="OceanOPS API key ID")
+    API_KEY_TOKEN: SecretStr = Field(..., description="OceanOPS API token")
 
-    model_config = SettingsConfigDict(
-        env_file=".env"
-    )
+    model_config = SettingsConfigDict(env_file=".env")
 
     @classmethod
     def settings_customise_sources(
@@ -22,14 +21,9 @@ class Settings(BaseSettings):
         file_secret_settings,
     ):
         return (
-            CliSettingsSource(settings_cls),  # CLI first
+            CliSettingsSource(settings_cls),
             init_settings,
             env_settings,
             dotenv_settings,
             file_secret_settings,
         )
-
-
-if __name__ == "__main__":
-    settings = Settings()
-    pprint(settings)
