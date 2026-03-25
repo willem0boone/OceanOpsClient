@@ -18,19 +18,14 @@ class OceanOps:
     :type BASE_URL: str :noindex:
     :cvar DEFAULT_SCHEMA_URL: URL to the default passport JSON schema.
     :type DEFAULT_SCHEMA_URL: str :noindex:
-    :cvar LOCAL_SCHEMA_PATH: Local path to the JSON schema file.
-    :type LOCAL_SCHEMA_PATH: Path :noindex:
     :ivar settings: Optional credentials/settings.
     :vartype settings: Optional[Settings]
-    :ivar headers: HTTP headers for authenticated requests. None if no credentials provided.
-    :vartype headers: Optional[Dict[str, str]]
     """
 
     BASE_URL = "https://www.ocean-ops.org/api/data"
     DEFAULT_SCHEMA_URL = (
         "https://www.ocean-ops.org/passports/examples/a-passport-input.schema.json"
     )
-    LOCAL_SCHEMA_PATH = Path(__file__).parent / "passport_schema" / "local_schema.json"
 
     def __init__(self, settings: Optional["Settings"] = None) -> None:
         """
@@ -40,15 +35,6 @@ class OceanOps:
         :type settings: Optional[Settings]
         """
         self.settings = settings
-
-        if self.settings:
-            self.headers = {
-                "Content-Type": "application/json",
-                "X-OceanOPS-Metadata-ID": self.settings.API_KEY_ID,
-                "X-OceanOPS-Metadata-Token": self.settings.API_KEY_TOKEN.get_secret_value(),
-            }
-        else:
-            self.headers = None  # read-only mode
 
     @classmethod
     def from_env(cls, env_file: Optional[str] = None) -> "OceanOps":
@@ -97,59 +83,41 @@ class OceanOps:
             raise ValueError("ptfWigosId must be provided")
 
         url = f"{self.BASE_URL}/platform/wigosid/{ptfWigosId}"
-        response = requests.get(url, headers=self.headers)
+        response = requests.get(url)
         response.raise_for_status()
         return response.json()
 
-    def push_data(self, payload: Dict[str, Any]) -> Dict[str, str]:
-        """
-        Push data to OceanOPS. Requires an authenticated client.
-
-        :param payload: Data to push to the API.
-        :type payload: Dict[str, Any]
-        :return: Status of the operation.
-        :rtype: Dict[str, str]
-        :raises RuntimeError: If client does not have credentials.
-        """
-        if not self.headers:
-            raise RuntimeError("Cannot push data: credentials required")
-        # TODO: Implement actual API call
-        return {"status": "success"}
-
     def validate_passport_json(
-        self,
-        local_json: Union[str, dict],
-        use_local_schema: bool = False,
+            self,
+            local_json: Union[str, dict],
+            schema_source: Union[str, Path, None] = None,
     ) -> bool:
         """
         Validate a local OceanOPS passport JSON against a schema.
 
         :param local_json: Path to JSON file or dict object to validate.
-        :type local_json: Union[str, dict]
-        :param use_local_schema: If True, use the local schema file. Defaults to False (uses online schema).
-        :type use_local_schema: bool
+        :param schema_source: If provided, use this local schema file path or a URL.
+                              Defaults to online schema.
         :return: True if JSON is valid against the schema.
-        :rtype: bool
-        :raises FileNotFoundError: If local schema file does not exist.
-        :raises ValueError: If local_json is not a file path or dictionary.
-        :raises requests.HTTPError: If online schema cannot be fetched.
-        :raises jsonschema.ValidationError: If JSON does not conform to schema.
         """
-        if use_local_schema:
-            schema_path = self.LOCAL_SCHEMA_PATH
-
-            if not schema_path.exists():
-                raise FileNotFoundError(f"Local schema not found: {schema_path}")
-
-            print(f"Using LOCAL schema: {schema_path}")
-            with open(schema_path, "r", encoding="utf-8") as f:
-                schema = json.load(f)
-        else:
+        # --- Load schema ---
+        if schema_source is None:
+            # Default: online schema
             print("Using ONLINE OceanOPS schema")
             resp = requests.get(self.DEFAULT_SCHEMA_URL)
             resp.raise_for_status()
             schema = resp.json()
+        else:
+            # User-provided local schema
+            schema_path = Path(schema_source)
+            if not schema_path.exists():
+                raise FileNotFoundError(
+                    f"Schema file not found: {schema_path}")
+            print(f"Using USER-PROVIDED local schema: {schema_path}")
+            with open(schema_path, "r", encoding="utf-8") as f:
+                schema = json.load(f)
 
+        # --- Load JSON to validate ---
         if isinstance(local_json, (str, Path)):
             with open(local_json, "r", encoding="utf-8") as f:
                 data = json.load(f)
@@ -158,7 +126,67 @@ class OceanOps:
         else:
             raise ValueError("local_json must be a file path or a dictionary")
 
+        # --- Validate ---
         validate(instance=data, schema=schema)
-
         print("JSON is valid against the schema")
         return True
+
+    def post_passport(
+            self,
+            payload: Union[str, Path, Dict[str, Any]],
+            dry_run: bool = True
+    ) -> Dict[str, Any]:
+        """
+        Push a passport JSON payload to OceanOPS.
+
+        Headers are generated only for this request using the secret token.
+
+        :param payload: Either:
+            - A path to a local JSON file containing the passport payload, or
+            - A Python dictionary representing the payload.
+        :type payload: Union[str, Path, Dict[str, Any]]
+        :param dry_run: If True, sets options.dryRun to True to prevent real updates.
+        :type dry_run: bool
+        :return: Response from the API as a Python dictionary.
+        :rtype: Dict[str, Any]
+        :raises RuntimeError: If credentials are missing or request fails.
+        """
+        if not self.settings:
+            raise RuntimeError("Cannot push data: credentials required")
+
+        # Build ephemeral headers
+        headers = {
+            "Content-Type": "application/json",
+            "X-OceanOPS-Metadata-ID": self.settings.API_KEY_ID,
+            "X-OceanOPS-Metadata-Token": self.settings.API_KEY_TOKEN.get_secret_value(),
+        }
+
+        # Load payload if it's a file path
+        if isinstance(payload, (str, Path)):
+            payload_path = Path(payload)
+            if not payload_path.exists():
+                raise FileNotFoundError(
+                    f"Payload JSON file not found: {payload}")
+            with open(payload_path, "r", encoding="utf-8") as f:
+                payload = json.load(f)
+        elif not isinstance(payload, dict):
+            raise ValueError(
+                "Payload must be a JSON file path or a dictionary")
+
+        # Ensure dryRun option is set
+        payload.setdefault("options", {})["dryRun"] = dry_run
+
+        url = f"{self.BASE_URL}/passports/submissions"
+
+        print(url)
+        print(headers)
+        try:
+            response = requests.post(url, headers=headers, json=payload)
+            response.raise_for_status()
+        except requests.RequestException as e:
+            raise RuntimeError(f"Passport submission failed: {e}") from e
+
+        try:
+            return response.json()
+        except json.JSONDecodeError:
+            return {"raw_text": response.text}
