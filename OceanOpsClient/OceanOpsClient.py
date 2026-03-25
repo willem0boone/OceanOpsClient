@@ -15,9 +15,9 @@ class OceanOps:
     "passport" files.
 
     Attributes:
-        BASE_URL (str): Base URL for OceanOPS API endpoints.
-        DEFAULT_SCHEMA_URL (str): URL to the default passport JSON schema.
-        LOCAL_SCHEMA_PATH (Path): Local path to the JSON schema file.
+        BASE_URL (str): Base URL for OceanOPS API endpoints. :noindex:
+        DEFAULT_SCHEMA_URL (str): URL to the default passport JSON schema. :noindex:
+        LOCAL_SCHEMA_PATH (Path): Local path to the JSON schema file. :noindex:
         settings (Optional[Settings]): Optional credentials/settings.
         headers (Optional[Dict[str, str]]): HTTP headers for authenticated
             requests. None if no credentials provided.
