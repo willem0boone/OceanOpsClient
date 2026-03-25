@@ -1,0 +1,262 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.ocean-ops.org/passports/schemas/passport-submit-request.schema.json",
+  "title": "GOOS Passport Submit Request",
+  "description": "Direct API submission schema for Passport upsert requests (Option A). Target matching should use passportId when available, with ptfId allowed as an internal fallback. WIGOS ID added for external references.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "meta": { "$ref": "#/$defs/Meta" },
+    "options": { "$ref": "#/$defs/Options" },
+    "platform": { "$ref": "#/$defs/PlatformSubmission" },
+    "sensorSetups": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/SensorSetupSubmission" }
+    },
+    "contactContributions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/ContactContribution" }
+    },
+    "agencyContributions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/AgencyContribution" }
+    }
+  },
+  "required": ["meta", "options", "platform"],
+  "$defs": {
+    "NonEmptyString": { "type": "string", "minLength": 1 },
+    "Boolean": { "type": "boolean" },
+    "DateTime": { "type": "string", "format": "date-time" },
+    "Latitude": { "type": "number", "minimum": -90, "maximum": 90 },
+    "Longitude": { "type": "number", "minimum": -180, "maximum": 180 },
+    "IdRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "id": { "type": "integer" } },
+      "required": ["id"]
+    },
+    "CodeRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "code": { "$ref": "#/$defs/NonEmptyString" } },
+      "required": ["code"]
+    },
+    "NameRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "name": { "$ref": "#/$defs/NonEmptyString" } },
+      "required": ["name"]
+    },
+    "OrcidRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "orcid": { "$ref": "#/$defs/NonEmptyString" } },
+      "required": ["orcid"]
+    },
+    "OceanExpertRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "oceanExpertId": { "$ref": "#/$defs/NonEmptyString" } },
+      "required": ["oceanExpertId"]
+    },
+    "ImoNumberRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "imoNumber": { "$ref": "#/$defs/NonEmptyString" } },
+      "required": ["imoNumber"]
+    },
+    "OvhIdRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "ovhId": { "$ref": "#/$defs/NonEmptyString" } },
+      "required": ["ovhId"]
+    },
+    "PtfIdRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "ptfId": { "type": "integer" } },
+      "required": ["ptfId"]
+    },
+    "WigosIdRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "wigosId": { "type": "string" } },
+      "required": ["wigosId"]
+    },
+    "VariableRef": {
+      "description": "Reference to an observed variable using one resolvable identifier.",
+      "oneOf": [
+        { "$ref": "#/$defs/IdRef" },
+        { "$ref": "#/$defs/CodeRef" },
+        { "$ref": "#/$defs/NameRef" }
+      ]
+    },
+    "SensorModelRef": {
+      "description": "Reference to a sensor model using one resolvable identifier.",
+      "oneOf": [
+        { "$ref": "#/$defs/IdRef" },
+        { "$ref": "#/$defs/CodeRef" },
+        { "$ref": "#/$defs/NameRef" }
+      ]
+    },
+    "MethodRef": {
+      "description": "Reference to a deployment method using one resolvable identifier.",
+      "oneOf": [
+        { "$ref": "#/$defs/IdRef" },
+        { "$ref": "#/$defs/CodeRef" },
+        { "$ref": "#/$defs/NameRef" }
+      ]
+    },
+    "EndingCauseRef": {
+      "description": "Reference to an ending cause using one resolvable identifier.",
+      "oneOf": [
+        { "$ref": "#/$defs/IdRef" },
+        { "$ref": "#/$defs/CodeRef" },
+        { "$ref": "#/$defs/NameRef" }
+      ]
+    },
+    "ShipRef": {
+      "description": "Reference to a ship using one resolvable identifier known so far for Option A.",
+      "oneOf": [
+        { "$ref": "#/$defs/ImoNumberRef" },
+        { "$ref": "#/$defs/OvhIdRef" }
+      ]
+    },
+    "Meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": { "$ref": "#/$defs/NonEmptyString" },
+        "sourceText": { "$ref": "#/$defs/NonEmptyString" },
+        "ingestionMethodId": { "type": "integer" },
+        "contactId": { "type": "integer" },
+        "observedAt": { "$ref": "#/$defs/DateTime" }
+      },
+      "required": ["schemaVersion", "sourceText", "ingestionMethodId", "contactId", "observedAt"]
+    },
+    "Options": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": { "type": "string", "enum": ["UPSERT"] },
+        "dryRun": { "$ref": "#/$defs/Boolean" },
+        "createIfMissing": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "platform": { "$ref": "#/$defs/Boolean" },
+            "sensorSetups": { "$ref": "#/$defs/Boolean" }
+          },
+          "required": ["platform", "sensorSetups"]
+        }
+      },
+      "required": ["mode", "dryRun", "createIfMissing"]
+    },
+    "PlatformSubmission": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "match": { "$ref": "#/$defs/PlatformMatch" },
+        "patch": { "$ref": "#/$defs/PlatformPatch" }
+      },
+      "required": ["match", "patch"]
+    },
+    "PlatformMatch": {
+      "description": "Reference to the target platform/mission to update. passportId should be used when available; ptfId is an internal fallback; wigosId is also allowed.",
+      "oneOf": [
+        { "$ref": "#/$defs/PassportIdRef" },
+        { "$ref": "#/$defs/PtfIdRef" },
+        { "$ref": "#/$defs/WigosIdRef" }
+      ]
+    },
+    "PlatformPatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "$ref": "#/$defs/NonEmptyString" },
+        "comments": { "$ref": "#/$defs/NonEmptyString" },
+        "deployment": { "$ref": "#/$defs/DeploymentPatch" },
+        "retrieval": { "$ref": "#/$defs/RetrievalPatch" }
+      }
+    },
+    "DeploymentPatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "date": { "$ref": "#/$defs/DateTime" },
+        "latitude": { "$ref": "#/$defs/Latitude" },
+        "longitude": { "$ref": "#/$defs/Longitude" },
+        "method": { "$ref": "#/$defs/MethodRef" },
+        "maxWaterDepth": { "type": "number" },
+        "elevation": { "type": "number" },
+        "ship": { "$ref": "#/$defs/ShipRef" }
+      }
+    },
+    "RetrievalPatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "startDate": { "$ref": "#/$defs/DateTime" },
+        "endDate": { "$ref": "#/$defs/DateTime" },
+        "latitude": { "$ref": "#/$defs/Latitude" },
+        "longitude": { "$ref": "#/$defs/Longitude" },
+        "ship": { "$ref": "#/$defs/ShipRef" },
+        "endingCause": { "$ref": "#/$defs/EndingCauseRef" }
+      }
+    },
+    "SensorSetupSubmission": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "match": { "$ref": "#/$defs/SensorSetupMatch" },
+        "data": { "$ref": "#/$defs/SensorSetupData" }
+      },
+      "required": ["match", "data"]
+    },
+    "SensorSetupMatch": { "type": "object", "additionalProperties": false, "properties": {} },
+    "SensorSetupData": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "create": { "$ref": "#/$defs/SensorSetupCreate" } },
+      "required": ["create"]
+    },
+    "SensorSetupCreate": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "variable": { "$ref": "#/$defs/VariableRef" },
+        "sensorModel": { "$ref": "#/$defs/SensorModelRef" },
+        "placement": { "type": "object", "additionalProperties": false, "properties": {} },
+        "sensor": { "type": "object", "additionalProperties": false, "properties": {} },
+        "lifecycle": { "type": "object", "additionalProperties": false, "properties": {} },
+        "comments": { "$ref": "#/$defs/NonEmptyString" }
+      },
+      "required": ["variable", "sensorModel"]
+    },
+    "RoleCodeList": { "type": "array", "items": { "$ref": "#/$defs/NonEmptyString" }, "minItems": 1 },
+    "ContactContribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "contactId": { "type": "integer" },
+        "roles": { "$ref": "#/$defs/RoleCodeList" }
+      },
+      "required": ["contactId", "roles"]
+    },
+    "AgencyContribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "agencyId": { "type": "integer" },
+        "roles": { "$ref": "#/$defs/RoleCodeList" }
+      },
+      "required": ["agencyId", "roles"]
+    },
+    "PassportIdRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "passportId": { "$ref": "#/$defs/NonEmptyString" } },
+      "required": ["passportId"]
+    }
+  }
+}
