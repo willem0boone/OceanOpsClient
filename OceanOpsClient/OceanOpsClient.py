@@ -3,6 +3,7 @@ import requests
 from typing import Any
 from typing import Dict
 from typing import Union
+from typing import Tuple
 from typing import Optional
 from pathlib import Path
 from jsonschema import validate
