@@ -6,7 +6,7 @@ from jsonschema import validate
 from OceanOpsClient.config import Settings
 
 
-class OceanOps:
+class OceanOpsClient:
     """
     Client for interacting with the OceanOPS API.
 
@@ -178,8 +178,8 @@ class OceanOps:
 
         url = f"{self.BASE_URL}/passports/submissions"
 
-        print(url)
-        print(headers)
+        # print(url)
+        # print(headers)
         try:
             response = requests.post(url, headers=headers, json=payload)
             response.raise_for_status()
@@ -190,3 +190,66 @@ class OceanOps:
             return response.json()
         except json.JSONDecodeError:
             return {"raw_text": response.text}
+
+    def post_get_id(
+            self,
+            program: str,
+            start_date: str,
+            model: str,
+            batch_status: str,
+            longitude: float,
+            latitude: float,
+    ) -> Dict[str, Any]:
+        """
+        Request a single platform identifier from OceanOPS.
+
+        :param program: Program name (e.g., "Argo CANADA")
+        :param start_date: Deployment/start date (ISO format)
+        :param model: Platform model (e.g., "APEX")
+        :param batch_status: Batch status (e.g., "IN STOCK")
+        :param longitude: Deployment longitude
+        :param latitude: Deployment latitude
+        :return: Result for the requested identifier
+        :rtype: Dict[str, Any]
+        :raises RuntimeError: If credentials are missing or request fails
+        """
+
+        if not self.settings:
+            raise RuntimeError("Cannot request ID: credentials required")
+
+        headers = {
+            "Content-Type": "application/json",
+            "X-OceanOPS-Metadata-ID": self.settings.API_KEY_ID,
+            "X-OceanOPS-Metadata-Token": self.settings.API_KEY_TOKEN.get_secret_value(),
+        }
+
+        # API expects a list → wrap single request
+        payload = [{
+            "program": program,
+            "startDate": start_date,
+            "model": model,
+            "batchStatus": batch_status,
+            "longitude": longitude,
+            "latitude": latitude,
+        }]
+
+        url = f"{self.BASE_URL}/platforms/getid"
+
+        try:
+            response = requests.post(url, headers=headers, json=payload)
+            response.raise_for_status()
+        except requests.RequestException as e:
+            raise RuntimeError(f"Get ID request failed: {e}") from e
+
+        try:
+            result = response.json()
+        except json.JSONDecodeError:
+            return {"raw_text": response.text}
+
+        # API returns a list → extract first element for convenience
+        if isinstance(result, list) and result:
+            return result[0]
+
+        raise RuntimeError("Unexpected response format from OceanOPS API")
+
+
