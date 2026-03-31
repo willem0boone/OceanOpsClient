@@ -1,0 +1,26 @@
+name: Sync Fork with Upstream
+
+on:
+  schedule:
+    - cron: "0 3 * * *"  # runs daily at 03:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Sync upstream changes
+        uses: peter-evans/sync-with-upstream@v3
+        with:
+          upstream_repository: amrit-eu/OceanOpsClient
+          upstream_branch: main
+          branch: main
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          create_pull_request: true
+          pr_title: "🔄 Daily sync with upstream"
+          pr_body: "Automated daily sync from amrit-eu/OceanOpsClient"
