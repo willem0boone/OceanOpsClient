@@ -98,7 +98,8 @@ Validate Passport
     status = client.validate_passport_json(passport)
     print(status)
 
- The status is a tuple: Tuple (True, None) if valid, otherwise (False, error message)
+
+The status is a tuple: Tuple (True, None) if valid, otherwise (False, error message)
 
 Push passport
 -------------
