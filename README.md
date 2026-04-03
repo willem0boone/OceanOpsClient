@@ -8,7 +8,7 @@ Python client for OceanOPs push API.
 Read the docs for more information.
 
 ## Contact
-- Willem Boone (VLIZ) Flanders Marine Institute: willem.boone@vliz.be
+- Willem Boone (VLIZ) Flanders Marine Institute: willem.boone@vliz.be / https://github.com/willem0boone
 
 ## Credits
 This package was developed as part of AMRIT project T8.2. 
