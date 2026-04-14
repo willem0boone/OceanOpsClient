@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "OceanOps"
-version = "0.1.0"
 authors = [{name = "Willem Boone", email = "willem.boone@vliz.be"}]
-dynamic = ["dependencies"]
+dynamic = ["dependencies", "version"]
 
 [tool.setuptools.dynamic]
 dependencies = { file = ["requirements.txt"] }
+version = { attr = "OceanOpsClient._version.__version__" }
 
 [project.optional-dependencies]
 docs = [
