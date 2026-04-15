@@ -1,0 +1,50 @@
+name: Sync Fork with Upstream (overwrite main)
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: sync-fork-main
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout workflow branch (keeps workflow file from being deleted)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: sync-workflows
+
+      - name: Configure git identity
+        run: |
+          git config user.name "willem0boone"
+          git config user.email "willem.boone@outlook.com"
+
+      - name: Add upstream remote
+        run: |
+          git remote remove upstream 2>/dev/null || true
+          git remote add upstream https://github.com/amrit-eu/OceanOpsClient.git
+
+      - name: Fetch origin + upstream
+        run: |
+          git fetch --prune origin
+          git fetch --prune upstream
+
+      - name: Point local main at upstream/main
+        run: |
+          git branch -f main upstream/main
+
+      - name: Push main using PAT (so Read the Docs triggers)
+        env:
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          git remote set-url origin https://x-access-token:${PAT_TOKEN}@github.com/${{ github.repository }}.git
+          git push --force-with-lease origin main:main
