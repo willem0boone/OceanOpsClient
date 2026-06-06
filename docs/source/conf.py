@@ -52,8 +52,8 @@ epub_show_urls = 'footnote'
 
 html_context = {
     "display_github": True, # Integrate GitHub
-    "github_user": "willem0boone", # Username
-    "github_repo": "template_RTD", # Repo name
-    "github_version": "master", # Version
+    "github_user": "amrit-eu", # Username
+    "github_repo": "OceanOpsClient", # Repo name
+    "github_version": "main", # Version
     "conf_py_path": "/docs/source/", # Path in the checkout to the docs root
 }

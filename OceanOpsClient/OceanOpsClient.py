@@ -8,6 +8,7 @@ from typing import Optional
 from pathlib import Path
 from jsonschema import validate
 from jsonschema import ValidationError
+from jsonschema import FormatChecker
 from OceanOpsClient.config import Settings
 
 
@@ -136,7 +137,7 @@ class OceanOpsClient:
 
         # --- Validate ---
         try:
-            validate(instance=data, schema=schema)
+            validate(instance=data, schema=schema, format_checker=FormatChecker())
             return True, None
 
         except ValidationError as e:
