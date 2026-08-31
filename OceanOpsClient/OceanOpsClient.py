@@ -1,14 +1,14 @@
 import json
-import requests
 from typing import Any
 from typing import Dict
-from typing import Union
-from typing import Tuple
 from typing import Optional
+from typing import Tuple
+from typing import Union
 from pathlib import Path
 from jsonschema import validate
 from jsonschema import ValidationError
 from jsonschema import FormatChecker
+import requests
 from OceanOpsClient.config import Settings
 
 
@@ -29,6 +29,7 @@ class OceanOpsClient:
     """
 
     BASE_URL = "https://www.ocean-ops.org/api/data"
+    SEARCH_ENDPOINT = f"{BASE_URL}/passports/search"
     DEFAULT_SCHEMA_URL = (
         "https://www.ocean-ops.org/passports/examples/a-passport-input.schema.json"
     )
@@ -74,7 +75,18 @@ class OceanOpsClient:
         settings = Settings(API_KEY_ID=key_id, API_KEY_TOKEN=token)
         return cls(settings)
 
-    def get_platform(self, ptfWigosId: str) -> Dict[str, Any]:
+    @classmethod
+    def _search_passports(cls, payload: Dict[str, Any]) -> Dict[str, Any]:
+        response = requests.post(
+            cls.SEARCH_ENDPOINT,
+            json=payload,
+            timeout=30,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    @classmethod
+    def get_by_wigosID(cls, ptfWigosId: str) -> Dict[str, Any]:
         """
         Retrieve platform information from OceanOPS using a WIGOS ID.
 
@@ -88,10 +100,72 @@ class OceanOpsClient:
         if not ptfWigosId:
             raise ValueError("ptfWigosId must be provided")
 
-        url = f"{self.BASE_URL}/platform/wigosid/{ptfWigosId}"
+        url = f"{cls.BASE_URL}/platform/wigosid/{ptfWigosId}"
         response = requests.get(url)
         response.raise_for_status()
         return response.json()
+
+    @classmethod
+    def get_by_internalID(
+            cls,
+            internal_id: str,
+            program: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Retrieve platform passport information by internal ID.
+
+        :param internal_id: Internal platform ID.
+        :type internal_id: str
+        :param program: Optional program ID to filter by.
+        :type program: Optional[str]
+        :return: JSON response from the OceanOPS API.
+        :rtype: Dict[str, Any]
+        :raises ValueError: If internal_id is not provided.
+        :raises requests.HTTPError: If the API request fails.
+        """
+        if not internal_id:
+            raise ValueError("internal_id must be provided")
+
+        payload = {
+            "internalIds": [internal_id],
+        }
+        if program is not None:
+            payload["filters"] = {"programs": program}
+
+        return cls._search_passports(payload)
+
+    @classmethod
+    def get_by_plfID(
+            cls,
+            plf_id: Union[str, int],
+            program: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Retrieve platform passport information by PLF ID.
+
+        :param plf_id: Platform ID.
+        :type plf_id: Union[str, int]
+        :param program: Optional program ID to filter by.
+        :type program: Optional[str]
+        :return: JSON response from the OceanOPS API.
+        :rtype: Dict[str, Any]
+        :raises ValueError: If plf_id is not provided.
+        :raises requests.HTTPError: If the API request fails.
+        """
+        if plf_id is None or plf_id == "":
+            raise ValueError("plf_id must be provided")
+
+        payload = {
+            "ptfIds": [plf_id],
+        }
+        if program is not None:
+            payload["filters"] = {"programs": program}
+
+        return cls._search_passports(payload)
+
+    def get_platform(self, ptfWigosId: str) -> Dict[str, Any]:
+        """Backward-compatible alias for get_by_wigosID."""
+        return self.get_by_wigosID(ptfWigosId)
 
     def validate_passport_json(
             self,
@@ -264,5 +338,3 @@ class OceanOpsClient:
             return result[0]
 
         raise RuntimeError("Unexpected response format from OceanOPS API")
-
-

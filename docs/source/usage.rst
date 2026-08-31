@@ -43,8 +43,28 @@ Pull a platform
 
     wigosID = "0-22000-0-6204817"
     client = OceanOpsClient()
-    resp = client.get_platform(ptfWigosId=wigosID)
+    resp = client.get_by_wigosID(ptfWigosId=wigosID)
     pprint(resp)
+
+Lookup by internal ID
+---------------------
+
+.. code-block:: python
+
+    from OceanOpsClient import OceanOpsClient
+
+    client = OceanOpsClient()
+    resp = client.get_by_internalID("007", program="1006434")
+
+Lookup by PLF ID
+----------------
+
+.. code-block:: python
+
+    from OceanOpsClient import OceanOpsClient
+
+    client = OceanOpsClient()
+    resp = client.get_by_plfID(1305758, program="1006434")
 
 This will return:
 
