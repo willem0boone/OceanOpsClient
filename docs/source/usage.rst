@@ -5,7 +5,7 @@ Credentials safety
 ------------------
 Avoid exposing credentials in your code. Store them in a :code:`.env` file in the project root:
 
-.. code-block:: dotenv
+.. code-block:: bash
 
     API_KEY_ID=1234
     API_KEY_TOKEN=abcdefghijklmnopqrstuvwxyz
