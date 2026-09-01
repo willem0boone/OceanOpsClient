@@ -5,7 +5,7 @@ Credentials safety
 ------------------
 Avoid exposing credentials in your code. Store them in a :code:`.env` file in the project root:
 
-.. code-block:: bash
+.. code-block:: python
 
     API_KEY_ID=1234
     API_KEY_TOKEN=abcdefghijklmnopqrstuvwxyz
@@ -32,7 +32,7 @@ This is the same pattern used by the repository example script:
 
 When credentials are configured, the output looks like this:
 
-.. code-block::
+.. code-block:: python
 
     API_KEY_ID='1234' API_KEY_TOKEN=SecretStr('**********')
 
