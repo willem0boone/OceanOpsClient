@@ -9,8 +9,8 @@ resp = client.get_by_wigosID(ptfWigosId=wigosID)
 pprint(resp)
 
 print("-"*50)
-program_id = 1006434
-resp = client.get_by_plfID(plf_id=program_id)
+plf_id = 1305758
+resp = client.get_by_plfID(plf_id=plf_id)
 pprint(resp)
 
 print("-"*50)

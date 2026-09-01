@@ -1,130 +1,107 @@
 Usage
 ==================
+
 Credentials safety
 ------------------
-Avoid exposing credentials in your code.
-Instead use a :code:`.env` file with key and token:
+Avoid exposing credentials in your code. Store them in a :code:`.env` file in the project root:
 
-.. code-block:: python
+.. code-block:: dotenv
 
-    API_KEY_ID = "1234"
-    API_KEY_TOKEN = "abcdefghijklmnopqrstuvwxyz"
+    API_KEY_ID=1234
+    API_KEY_TOKEN=abcdefghijklmnopqrstuvwxyz
 
-
-Initiate using:
+The client reads these values with :code:`pydantic-settings` when you call :code:`OceanOpsClient.from_env()`.
 
 .. code-block:: python
 
     from OceanOpsClient import OceanOpsClient
-    client = OceanOpsClient.from_env()
 
-The credentials are in pydantic safe settings
+    client = OceanOpsClient.from_env()
+    print(client.settings)
+
+If the environment variables are not present, :code:`from_env()` falls back to a read-only client and :code:`client.settings` will be :code:`None`.
+
+This is the same pattern used by the repository example script:
 
 .. code-block:: python
 
-        print(client.settings)
+    from OceanOpsClient import OceanOpsClient
 
-This will return:
+    client = OceanOpsClient.from_env()
+    print(client.settings)
+
+When credentials are configured, the output looks like this:
 
 .. code-block::
 
     API_KEY_ID='1234' API_KEY_TOKEN=SecretStr('**********')
 
-Under no circumstances the client will display your secret token.
+Under no circumstances will the client display your secret token in plain text.
 
+Create a client explicitly
+--------------------------
+If you prefer to pass credentials directly, use :code:`from_credentials()`:
 
-Pull a platform
----------------
+.. code-block:: python
+
+    from OceanOpsClient import OceanOpsClient
+
+    client = OceanOpsClient.from_credentials("1234", "abcdefghijklmnopqrstuvwxyz")
+    print(client.settings)
+
+Read-only lookups
+-----------------
+The library can be used without credentials for read-only lookups.
+
+Pull a platform by WIGOS ID:
 
 .. code-block:: python
 
     from pprint import pprint
     from OceanOpsClient import OceanOpsClient
 
-    wigosID = "0-22000-0-6204817"
     client = OceanOpsClient()
-    resp = client.get_by_wigosID(ptfWigosId=wigosID)
-    pprint(resp)
+    wigos_id = "0-22000-0-6204817"
+    response = client.get_by_wigosID(ptfWigosId=wigos_id)
+    pprint(response)
 
-Lookup by internal ID
----------------------
+Lookup by internal ID:
 
 .. code-block:: python
 
     from OceanOpsClient import OceanOpsClient
 
     client = OceanOpsClient()
-    resp = client.get_by_internalID("007", program="1006434")
+    response = client.get_by_internalID("007", program="1006434")
+    print(response)
 
-Lookup by PLF ID
-----------------
+Lookup by PLF ID:
 
 .. code-block:: python
 
     from OceanOpsClient import OceanOpsClient
 
     client = OceanOpsClient()
-    resp = client.get_by_plfID(1305758, program="1006434")
+    response = client.get_by_plfID(1305758, program="1006434")
+    print(response)
 
-This will return:
-
-.. code-block::
-
-    {'data': [{'activityCriterion': 0,
-               'batchRequestRef': '2026-02-09T10:15:54Z-Other Met Moored Buoy',
-               'closureCriterion': 0,
-               'creatorId': None,
-               'dataUrl': None,
-               'deleteTag': None,
-               'description': 'Moored surface buoy that serves both ERICs ICOS and '
-                              'LifeWatch. The buoy is equipped with sensors for '
-                              'pCO2, dissolved oxygen, temperature, salinity, '
-                              'fluorescence (chl-a), turbidity, passive acoustic '
-                              'receiver. Sensors are deployed approx 1m below sea '
-                              'surface. Station is visited on a monthly basis in '
-                              'order to collect samples for validation/calibration '
-                              'of sensors and maintain/replace equipment. Station '
-                              'has a secure and stable communication with VLIZ '
-                              'servers for NRT data transmission and overall '
-                              'interactive communication with in situ equipment',
-               'eNotificationDate': None,
-               'endingDate': None,
-               'id': 1305758,
-               'ingestionMethodId': None,
-               'insertDate': '2026-02-09T10:15:54.647171',
-               'lastLocId': None,
-               'lastUpdate': None,
-               'metadataAvailable': None,
-               'name': 'ICOS STATION Thornton Buoy',
-               'nokReason': None,
-               'passportValid': None,
-               'platform_asset_id': None,
-               'ref': '6204817',
-               'refParent': None,
-               'sourceText': None,
-               'updateDate': '2026-02-16T08:06:10.511361',
-               'validated': None,
-               'wigosSynchronised': None}],
-     'total': 1}
-
-Validate Passport
------------------
+Validate a passport
+-------------------
+Passport validation works without credentials and returns a tuple:
+:code:`(True, None)` for valid data, or :code:`(False, "<error message>")` for invalid data.
 
 .. code-block:: python
 
     from OceanOpsClient import OceanOpsClient
+
     client = OceanOpsClient()
     passport = "passport_thornton_buoy.json"
     status = client.validate_passport_json(passport)
     print(status)
 
-
-The status is a tuple: Tuple (True, None) if valid, otherwise (False, error message)
-
-Push passport
--------------
-For pushing a passport you need credentials.
-Make sure to have a valid .env file in the repository.
+Push a passport
+---------------
+For authenticated writes, make sure your :code:`.env` file is available and use :code:`from_env()`.
 
 .. code-block:: python
 
@@ -134,8 +111,10 @@ Make sure to have a valid .env file in the repository.
     client = OceanOpsClient.from_env()
 
     passport = "passport_thornton_buoy.json"
-    status = client.validate_passport_json(passport)
-    print(status)
+    validation = client.validate_passport_json(passport)
+    print(validation)
 
-    m = client.post_passport(passport, dry_run=True)
-    pprint(m)
+    result = client.post_passport(passport, dry_run=True)
+    pprint(result)
+
+The :code:`dry_run=True` option is the safest way to test a push request without making a real update.
