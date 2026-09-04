@@ -46,4 +46,26 @@ class TestOceanOps(unittest.TestCase):
         client = OceanOpsClient()
         self.assertIsNone(client.settings)
 
+    def test_post_get_id_rejects_tuple_values(self):
+        client = OceanOpsClient.from_credentials("fake-id", "fake-token")
+
+        with self.assertRaisesRegex(TypeError, "Remove any trailing comma"):
+            client.post_get_id(
+                program=("vliz-arms-mbon",),
+                start_date="2026-06-15T12:00:00",
+                longitude=(4.6,),
+                latitude=(51.2,),
+            )
+
+    def test_post_get_id_requires_full_iso_datetime(self):
+        client = OceanOpsClient.from_credentials("fake-id", "fake-token")
+
+        with self.assertRaisesRegex(ValueError, "full ISO datetime"):
+            client.post_get_id(
+                program="vliz-arms-mbon",
+                start_date="2026-06-15T12:00",
+                longitude=4.6,
+                latitude=51.2,
+            )
+
 

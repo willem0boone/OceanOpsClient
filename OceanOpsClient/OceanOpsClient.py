@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 from typing import Any
 from typing import Dict
 from typing import Optional
@@ -304,6 +305,30 @@ class OceanOpsClient:
         if not self.settings:
             raise RuntimeError("Cannot request ID: credentials required")
 
+        if isinstance(program, (tuple, list)):
+            raise TypeError(
+                "program must be a string. Remove any trailing comma after the value."
+            )
+        if isinstance(start_date, (tuple, list)):
+            raise TypeError(
+                "start_date must be a string. Remove any trailing comma after the value."
+            )
+        try:
+            datetime.strptime(start_date, "%Y-%m-%dT%H:%M:%S")
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                "start_date must be a full ISO datetime string with seconds, "
+                "for example '2022-06-15T12:00:00'."
+            ) from exc
+        if longitude is not None and isinstance(longitude, (tuple, list)):
+            raise TypeError(
+                "longitude must be a number. Remove any trailing comma after the value."
+            )
+        if latitude is not None and isinstance(latitude, (tuple, list)):
+            raise TypeError(
+                "latitude must be a number. Remove any trailing comma after the value."
+            )
+
         headers = {
             "Content-Type": "application/json",
             "X-OceanOPS-Metadata-ID": self.settings.API_KEY_ID,
@@ -315,15 +340,15 @@ class OceanOpsClient:
             "program": program,
             "startDate": start_date,
         }
-        
+
         if model is not None:
             payload_item["model"] = model
         if batch_status is not None:
             payload_item["batchStatus"] = batch_status
         if longitude is not None:
-            payload_item["longitude"] = longitude
+            payload_item["longitude"] = float(longitude)
         if latitude is not None:
-            payload_item["latitude"] = latitude
+            payload_item["latitude"] = float(latitude)
         
         payload = [payload_item]
 
