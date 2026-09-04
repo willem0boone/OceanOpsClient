@@ -6,5 +6,5 @@ client = OceanOpsClient.from_env()
 passport = "passport_thornton_buoy.json"
 # client.validate_passport_json(passport)
 
-m = client.post_passport(passport, dry_run=False)
+m = client.post_passport(passport, dry_run=True)
 pprint(m)

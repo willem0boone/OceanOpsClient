@@ -9,7 +9,11 @@ class Settings(BaseSettings):
     API_KEY_ID: str = Field(..., description="OceanOPS API key ID")
     API_KEY_TOKEN: SecretStr = Field(..., description="OceanOPS API token")
 
-    model_config = SettingsConfigDict(env_file=".env")
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
     @classmethod
     def settings_customise_sources(
