@@ -282,20 +282,20 @@ class OceanOpsClient:
             self,
             program: str,
             start_date: str,
-            model: str,
-            batch_status: str,
-            longitude: float,
-            latitude: float,
+            model: str = None,
+            batch_status: str = None,
+            longitude: float = None,
+            latitude: float = None,
     ) -> Dict[str, Any]:
         """
         Request a single platform identifier from OceanOPS.
 
-        :param program: Program name (e.g., "Argo CANADA")
-        :param start_date: Deployment/start date (ISO format)
-        :param model: Platform model (e.g., "APEX")
-        :param batch_status: Batch status (e.g., "IN STOCK")
-        :param longitude: Deployment longitude
-        :param latitude: Deployment latitude
+        :param program: Program name (e.g., "Argo CANADA") - MANDATORY
+        :param start_date: Deployment/start date (ISO format: "2022-06-15T12:00:00") - MANDATORY
+        :param model: Platform model (e.g., "APEX") - optional
+        :param batch_status: Batch status (e.g., "IN STOCK") - optional
+        :param longitude: Deployment longitude - optional
+        :param latitude: Deployment latitude - optional
         :return: Result for the requested identifier
         :rtype: Dict[str, Any]
         :raises RuntimeError: If credentials are missing or request fails
@@ -311,14 +311,21 @@ class OceanOpsClient:
         }
 
         # API expects a list → wrap single request
-        payload = [{
+        payload_item = {
             "program": program,
             "startDate": start_date,
-            "model": model,
-            "batchStatus": batch_status,
-            "longitude": longitude,
-            "latitude": latitude,
-        }]
+        }
+        
+        if model is not None:
+            payload_item["model"] = model
+        if batch_status is not None:
+            payload_item["batchStatus"] = batch_status
+        if longitude is not None:
+            payload_item["longitude"] = longitude
+        if latitude is not None:
+            payload_item["latitude"] = latitude
+        
+        payload = [payload_item]
 
         url = f"{self.BASE_URL}/platforms/getid"
 
