@@ -118,3 +118,31 @@ For authenticated writes, make sure your :code:`.env` file is available and use 
     pprint(result)
 
 The :code:`dry_run=True` option is the safest way to test a push request without making a real update.
+
+Request a platform identifier
+-----------------------------
+Use :code:`post_get_id()` to request a new platform identifier. Optional fields like :code:`model` and :code:`batch_status` can be included when you have them.
+
+.. code-block:: python
+
+    from pprint import pprint
+    from OceanOpsClient import OceanOpsClient
+
+    client = OceanOpsClient.from_env()
+
+    program = "vliz-arms-mbon"
+    start_date = "2026-06-15T12:00:00"
+    model = "APEX"
+    batch_status = "IN STOCK"
+    longitude = 4.6
+    latitude = 51.2
+
+    result = client.post_get_id(
+        program=program,
+        start_date=start_date,
+        model=model,
+        batch_status=batch_status,
+        longitude=longitude,
+        latitude=latitude,
+    )
+    pprint(result)
